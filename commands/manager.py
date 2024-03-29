@@ -37,7 +37,8 @@ class Manager:
             message = mess.content.split(";")
             disc = str(message[1]).title()
             professor = str(message[2]).title()
-            return f"Hoje, dia {format_dt(datetime.datetime, style="d")}, não haverá aula de {disc} do professor {professor}."
+            # return f"Hoje, dia {format_dt(datetime.datetime, style="d")}, não haverá aula de {disc} do professor {professor}."
+            return f"Hoje não haverá aula de {disc} do professor {professor}."
     def shareMessage(self, mess):
             message = mess.content.split(";")
             return message[1]
@@ -64,10 +65,10 @@ class Manager:
         for i in atividade.values():
             if i['data'] - datetime.datetime.now() < one_day and i['tipo'] == 'atividade':
                 return (
-                    f"💀💀 Restam {humanize.naturaldelta(i['data'] - datetime.datetime.now())} para a entrega da {i['nome']}".replace(
+                    f"💀💀 Restam {humanize.naturaldelta(i['data'] - datetime.datetime.now()+ one_day)} para a entrega da {i['nome']}".replace(
                         "hours", "horas"))
             else:
-                return (f"📅📅 Faltam {humanize.naturaldelta(i['data'] - datetime.datetime.today())} para {i['nome']}".replace(
+                return (f"📅📅 Faltam {humanize.naturaldelta(i['data'] - datetime.datetime.now()+ one_day)} para {i['nome']}".replace(
                     "days", "dias"))
 
     def atualizacao(self):
@@ -77,7 +78,7 @@ class Manager:
             retmsss = ""
             for i in atividade.values():
                 if i['tipo'] == 'prova':
-                    retmsss += f"📅📅 Faltam {humanize.naturaldelta(i['data'] - datetime.datetime.today() + datetime.timedelta(days=1))} para {i['nome']}\n".replace(
+                    retmsss += f"📅📅 Faltam {humanize.naturaldelta(i['data'] - datetime.datetime.today() + one_day)} para {i['nome']}\n".replace(
                         "days", "dias")
             return retmsss
 

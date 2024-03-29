@@ -61,7 +61,6 @@ async def on_message(message):
         print("Canal privado ---", message)
         channelreply = message.channel
 
-
     if message.content.startswith("!noclasstomorrow"):
         if manager.checkAutor(message):
             reply = manager.noClassTomorrow(message)
