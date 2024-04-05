@@ -1,110 +1,67 @@
+from commands.mentoria import Mentoria
+from commands.tests import Tests
+
 import discord
-from datetime import datetime
-from discord.ext import commands
+from discord import app_commands
 from dotenv import dotenv_values
-import asyncio
-from commands.manager import Manager
 
 # dotenv variables
 config = dotenv_values(".env")
 CLIENT_ID = config["CLIENT_ID"]
 TOKEN = config["TOKEN"]
 SERVER_ID = config["SERVER_ID"]
-
-# intents
-intents = discord.Intents.default()
-intents.message_content = True
-
-# class
-manager = Manager()
-
-# discord connection
-client = discord.Client(intents=intents)
-
-# defining the command prefix
-bot = commands.Bot(command_prefix='/', intents=intents)
+MAIN_SERVER_ID = config["MAIN_SERVER_ID"]
 
 
-# login
+MY_GUILD = discord.Object(id=MAIN_SERVER_ID)
+
+
+class MyClient(discord.Client):
+    def __init__(self):
+        super().__init__(intents=discord.Intents.default())
+        self.tree = app_commands.CommandTree(self)
+
+    async def setup_hook(self):
+        self.tree.copy_global_to(guild=MY_GUILD)
+        await self.tree.sync(guild=MY_GUILD)
+
+
+mentor = Mentoria()
+client = MyClient()
+tests = Tests()
+
+
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'Logged in as {client.user} (ID: {client.user.id})')
+    print('------')
 
 
-@client.event
-async def on_message(message):
-    print(message)
-    if message.author == client.user:
-        return
+@client.tree.command(description='Mentorias disponiveis.')
+@app_commands.choices(choice=[
+    app_commands.Choice(name="ME", value="me"),
+    app_commands.Choice(name="GE", value="ge"),
+    app_commands.Choice(name="Outra", value="petcc"),
+])
+async def mentoria(
+        interaction: discord.Interaction,
+        choice: str
+):
+    """Reply with the days and hours of mentors"""
+    await interaction.response.send_message(f'{mentor.retmentoria(choice)}', ephemeral=True)
 
-    if message.content.startswith('!ping'):
-        await message.channel.send('pong')
 
-    if message.content.startswith("!github"):
-        await message.channel.send('https://github.com/gustapavao/btico')
+@client.tree.command(description='Próximas provas.')
+async def provas(
+        interaction: discord.Interaction
+):
+    """Reply with the next tests"""
+    await interaction.response.send_message(f'{tests.all_tests()}', ephemeral=True)
 
-    if message.content.startswith("!hora"):
-        hoje = datetime.now()
-        hoje_string = hoje.strftime("%H:%M")
-        await message.channel.send(f'Agora são {hoje_string} em ponto.')
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    try:
-        channels = message.guild.channels
-        for channel in channels:
-            if channel.name == "🐦┇avisos":
-                channelreply = channel
-    except:
-        print("Canal privado ---", message)
-        channelreply = message.channel
+@client.tree.command(description='Git do Bot.')
+async def github(interaction: discord.Interaction):
+    await interaction.response.send_message("Fique a vontade para contribuir:\nhttps://github.com/gustapavao/btico")
 
-    if message.content.startswith("!noclasstomorrow"):
-        if manager.checkAutor(message):
-            reply = manager.noClassTomorrow(message)
-            await channelreply.send(reply)
-        else:
-            await message.channel.send("Você não pode realizar essa ação")
-    elif message.content.startswith("!aviso"):
-        if manager.checkAutor(message):
-            reply = manager.shareMessage(message)
-            await channelreply.send(reply)
-        else:
-            await message.channel.send("Você não pode realizar essa ação")
-    elif message.content.startswith("!newtask"):
-        if manager.checkAutor(message):
-            reply = manager.newTask(message)
-            await channelreply.send(reply)
-        else:
-            await message.channel.send("Você não pode realizar essa ação")
-    elif message.content.startswith("!github"):
-        reply = manager.github
-        await message.channel.send(reply)
-    elif message.content.startswith("!monitoria"):
-        reply = manager.monitoria(message)
-        await message.channel.send(reply)
-    elif message.content.startswith("!anderson"):
-        reply = manager.anderson()
-        await message.channel.send(reply)
-    elif message.content.startswith("!help"):
-        reply = manager.help()
-        await message.channel.send(reply)
-    elif message.content.startswith("!f5"):
-        if manager.checkAutor(message):
-            reply = manager.atualizacao()
-            await channelreply.send(reply)
-        else:
-            await message.channel.send("Você não pode realizar essa ação")
-    elif message.content.startswith("!provas"):
-        reply = manager.nextTests()
-        await message.channel.send(reply)
-    elif message.content.startswith("!avprovas"):
-        if manager.checkAutor(message):
-            reply = manager.nextTests()
-            await channelreply.send(reply)
-        else:
-            await message.channel.send("Você não pode realizar essa ação")
 
 client.run(TOKEN)

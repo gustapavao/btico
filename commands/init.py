@@ -1,2 +1,0 @@
-from commands.github import *
-
